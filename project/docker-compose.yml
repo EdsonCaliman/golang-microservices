@@ -1,6 +1,19 @@
 version: "3"
 
 services:
+  frontend-service:
+    build:
+      context: ./../front-end
+      dockerfile: ./../front-end/front-end.dockerfile
+    restart: always
+    ports:
+      - "9090:9090"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      BROKER_URL: http://localhost:8080
+
   broker-service:
     build:
       context: ./../broker-service
