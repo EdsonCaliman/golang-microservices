@@ -11,7 +11,7 @@ import (
 func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
 		Email    string `json:"email"`
-		Password string `json:"password`
+		Password string `json:"password"`
 	}
 
 	err := app.readJSON(w, r, &requestPayload)
@@ -20,13 +20,13 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := app.Models.User.GetByEmail(requestPayload.Email)
+	user, err := app.Repo.GetByEmail(requestPayload.Email)
 	if err != nil {
 		app.errorJSON(w, errors.New("invalid credentials"), http.StatusUnauthorized)
 		return
 	}
 
-	valid, err := user.PasswordMatches(requestPayload.Password)
+	valid, err := app.Repo.PasswordMatches(requestPayload.Password, *user)
 	if err != nil || !valid {
 		app.errorJSON(w, errors.New("invalid credentials"), http.StatusUnauthorized)
 		return
@@ -65,8 +65,12 @@ func (app *Config) logRequest(name, data string) error {
 		return err
 	}
 
-	client := &http.Client{}
-	_, err = client.Do(request)
+	res, err := app.Client.Do(request)
+
+	if res.StatusCode != http.StatusAccepted {
+		return fmt.Errorf("error on calling logger")
+	}
+
 	if err != nil {
 		return err
 	}
